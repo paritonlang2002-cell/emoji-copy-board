@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emoji Copy Board</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f5f6fc;
+  --surface: #ffffff;
+  --text: #252943;
+  --muted: #858aa3;
+  --accent: #7065e8;
+  --border: #e8e9f3;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 30px 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  width: 100%;
+  max-width: 850px;
+  margin: auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 5vw, 38px);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 16px 18px 16px 46px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #7065e81a;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 17px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.category-btn {
+  padding: 10px 15px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  color: #626780;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.category-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.category-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 10px;
+}
+
+.emoji-btn {
+  min-width: 0;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.emoji-btn:hover {
+  transform: translateY(-3px);
+  border-color: #c8c3ff;
+  box-shadow: 0 5px 16px #7065e81a;
+}
+
+.emoji-btn:active {
+  transform: scale(0.94);
+}
+
+.emoji {
+  font-size: 29px;
+  line-height: 1.2;
+}
+
+.emoji-name {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 3px;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-state {
+  display: none;
+  padding: 45px 15px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.empty-state .emoji {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 38px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 10;
+  max-width: calc(100% - 32px);
+  padding: 13px 20px;
+  border-radius: 12px;
+  background: #252943;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 8px 25px #0002;
+  opacity: 0;
+  transform: translate(-50%, 15px);
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+footer {
+  margin-top: 28px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 24px 12px;
+  }
+
+  .emoji-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .emoji-btn {
+    border-radius: 10px;
+  }
+
+  .emoji {
+    font-size: 27px;
+  }
+
+  .category-btn {
+    padding: 9px 12px;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="container">
+  <header>
+    <h1>Emoji Copy Board</h1>
+    <p class="subtitle">Find your favourite emoji, click to copy, and use it anywhere.</p>
+  </header>
+
+  <div class="search-box">
+    <span class="search-icon">⌕</span>
+    <input
+      type="search"
+      id="search"
+      placeholder="Search emojis..."
+      aria-label="Search emojis"
+      autocomplete="off"
+    >
+  </div>
+
+  <nav class="categories" id="categories" aria-label="Emoji categories"></nav>
+
+  <div class="section-heading">
+    <h2 id="sectionTitle">All Emojis</h2>
+    <span class="count" id="count">0 emojis</span>
+  </div>
+
+  <div class="emoji-grid" id="emojiGrid"></div>
+
+  <div class="empty-state" id="emptyState">
+    <span class="emoji">🔎</span>
+    No emojis found. Try another search.
+  </div>
+
+  <footer>Click any emoji to copy it to your clipboard.</footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const categories = [
+  { id: "all", name: "All", icon: "✨" },
+  { id: "smileys", name: "Smileys", icon: "😀" },
+  { id: "gestures", name: "Gestures", icon: "👋" },
+  { id: "animals", name: "Animals", icon: "🐼" },
+  { id: "food", name: "Food", icon: "🍕" },
+  { id: "nature", name: "Nature", icon: "🌿" },
+  { id: "activities", name: "Activities", icon: "⚽" },
+  { id: "travel", name: "Travel", icon: "🚀" },
+  { id: "objects", name: "Objects", icon: "💡" },
+  { id: "symbols", name: "Symbols", icon: "❤️" }
+];
+
+const emojis = [
+  ["😀","Grinning face","smileys"],["😃","Big smile","smileys"],
+  ["😄","Smiling eyes","smileys"],["😁","Beaming face","smileys"],
+  ["😆","Laughing","smileys"],["😅","Nervous laugh","smileys"],
+  ["😂","Joy","smileys"],["🤣","Rolling laugh","smileys"],
+  ["😊","Blushing smile","smileys"],["😇","Halo","smileys"],
+  ["🙂","Slight smile","smileys"],["🙃","Upside down","smileys"],
+  ["😉","Wink","smileys"],["😍","Heart eyes","smileys"],
+  ["🥰","Loving face","smileys"],["😘","Kiss","smileys"],
+  ["😋","Yum","smileys"],["😎","Cool","smileys"],
+  ["🤓","Nerd","smileys"],["🧐","Monocle","smileys"],
+  ["🤔","Thinking","smileys"],["🫡","Salute","smileys"],
+  ["🤗","Hug","smileys"],["🤩","Star struck","smileys"],
+  ["🥳","Party","smileys"],["😴","Sleeping","smileys"],
+  ["🥱","Yawning","smileys"],["😭","Crying","smileys"],
+  ["😡","Angry","smileys"],["🤯","Mind blown","smileys"],
+  ["👋","Wave","gestures"],["🤚","Raised back hand","gestures"],
+  ["✋","Raised hand","gestures"],["🖐️","Hand with fingers","gestures"],
+  ["👌","OK","gestures"],["🤌","Pinched fingers","gestures"],
+  ["✌️","Victory","gestures"],["🤞","Fingers crossed","gestures"],
+  ["🤟","Love you gesture","gestures"],["🤘","Rock on","gestures"],
+  ["🤙","Call me","gestures"],["👈","Point left","gestures"],
+  ["👉","Point right","gestures"],["👆","Point up","gestures"],
+  ["👇","Point down","gestures"],["👍","Thumbs up","gestures"],
+  ["👎","Thumbs down","gestures"],["👏","Clapping","gestures"],
+  ["🙌","Celebration","gestures"],["🙏","Thanks","gestures"],
+  ["💪","Strong","gestures"],["🫶","Heart hands","gestures"],
+  ["🐶","Dog","animals"],["🐱","Cat","animals"],
+  ["🐭","Mouse","animals"],["🐹","Hamster","animals"],
+  ["🐰","Rabbit","animals"],["🦊","Fox","animals"],
+  ["🐻","Bear","animals"],["🐼","Panda","animals"],
+  ["🐨","Koala","animals"],["🐯","Tiger","animals"],
+  ["🦁","Lion","animals"],["🐮","Cow","animals"],
+  ["🐸","Frog","animals"],["🐵","Monkey","animals"],
+  ["🐧","Penguin","animals"],["🐦","Bird","animals"],
+  ["🦋","Butterfly","animals"],["🐢","Turtle","animals"],
+  ["🐬","Dolphin","animals"],["🦄","Unicorn","animals"],
+  ["🍎","Apple","food"],["🍐","Pear","food"],
+  ["🍊","Orange","food"],["🍋","Lemon","food"],
+  ["🍉","Watermelon","food"],["🍇","Grapes","food"],
+  ["🍓","Strawberry","food"],["🫐","Blueberries","food"],
+  ["🍒","Cherries","food"],["🍍","Pineapple","food"],
+  ["🥭","Mango","food"],["🥑","Avocado","food"],
+  ["🍕","Pizza","food"],["🍔","Burger","food"],
+  ["🍟","Fries","food"],["🌮","Taco","food"],
+  ["🍜","Noodles","food"],["🍣","Sushi","food"],
+  ["🍰","Cake","food"],["🍩","Doughnut","food"],
+  ["☕","Coffee","food"],["🧋","Bubble tea","food"],
+  ["🌱","Seedling","nature"],["🌲","Evergreen tree","nature"],
+  ["🌳","Tree","nature"],["🌴","Palm tree","nature"],
+  ["🌵","Cactus","nature"],["🌷","Tulip","nature"],
+  ["🌻","Sunflower","nature"],["🌹","Rose","nature"],
+  ["🌺","Hibiscus","nature"],["🍀","Four leaf clover","nature"],
+  ["🍁","Maple leaf","nature"],["🍄","Mushroom","nature"],
+  ["🌈","Rainbow","nature"],["☀️","Sun","nature"],
+  ["🌤️","Sun behind cloud","nature"],["⛈️","Thunderstorm","nature"],
+  ["❄️","Snowflake","nature"],["🔥","Fire","nature"],
+  ["💧","Water drop","nature"],["🌊","Wave","nature"],
+  ["⚽","Football","activities"],["🏀","Basketball","activities"],
+  ["🏈","American football","activities"],["⚾","Baseball","activities"],
+  ["🎾","Tennis","activities"],["🏐","Volleyball","activities"],
+  ["🏏","Cricket","activities"],["🏓","Table tennis","activities"],
+  ["🏸","Badminton","activities"],["🥊","Boxing","activities"],
+  ["🎯","Bullseye","activities"],["🎮","Video game","activities"],
+  ["🎲","Dice","activities"],["🎨","Art","activities"],
+  ["🎸","Guitar","activities"],["🎹","Piano","activities"],
+  ["🎤","Microphone","activities"],["🏆","Trophy","activities"],
+  ["🥇","Gold medal","activities"],["🎉","Party popper","activities"],
+  ["🚗","Car","travel"],["🚕","Taxi","travel"],
+  ["🚌","Bus","travel"],["🚆","Train","travel"],
+  ["✈️","Airplane","travel"],["🚀","Rocket","travel"],
+  ["🛸","Flying saucer","travel"],["🚲","Bicycle","travel"],
+  ["🏍️","Motorcycle","travel"],["🚢","Ship","travel"],
+  ["⛵","Sailboat","travel"],["🗺️","World map","travel"],
+  ["🌍","Earth Africa","travel"],["🌎","Earth Americas","travel"],
+  ["🌏","Earth Asia","travel"],["🏔️","Mountain","travel"],
+  ["🏖️","Beach","travel"],["🏕️","Camping","travel"],
+  ["🏰","Castle","travel"],["🗼","Tower","travel"],
+  ["💡","Light bulb","objects"],["🔦","Flashlight","objects"],
+  ["📱","Mobile phone","objects"],["💻","Laptop","objects"],
+  ["⌨️","Keyboard","objects"],["🖥️","Desktop computer","objects"],
+  ["🖨️","Printer","objects"],["📷","Camera","objects"],
+  ["🔭","Telescope","objects"],["🔬","Microscope","objects"],
+  ["🔋","Battery","objects"],["🔌","Plug","objects"],
+  ["⚙️","Gear","objects"],["🧲","Magnet","objects"],
+  ["💎","Gem","objects"],["🔑","Key","objects"],
+  ["📚","Books","objects"],["✏️","Pencil","objects"],
+  ["📝","Memo","objects"],["🎁","Gift","objects"],
+  ["❤️","Red heart","symbols"],["🧡","Orange heart","symbols"],
+  ["💛","Yellow heart","symbols"],["💚","Green heart","symbols"],
+  ["💙","Blue heart","symbols"],["💜","Purple heart","symbols"],
+  ["🖤","Black heart","symbols"],["🤍","White heart","symbols"],
+  ["🤎","Brown heart","symbols"],["💔","Broken heart","symbols"],
+  ["💕","Two hearts","symbols"],["💯","Hundred points","symbols"],
+  ["✅","Check mark","symbols"],["❌","Cross mark","symbols"],
+  ["⚠️","Warning","symbols"],["❓","Question mark","symbols"],
+  ["❗","Exclamation","symbols"],["♻️","Recycling","symbols"],
+  ["🔴","Red circle","symbols"],["⭐","Star","symbols"],
+  ["✨","Sparkles","symbols"],["⚡","Lightning","symbols"],
+  ["♾️","Infinity","symbols"],["☮️","Peace","symbols"]
+];
+
+const categoryContainer = document.getElementById("categories");
+const emojiGrid = document.getElementById("emojiGrid");
+const searchInput = document.getElementById("search");
+const countLabel = document.getElementById("count");
+const sectionTitle = document.getElementById("sectionTitle");
+const emptyState = document.getElementById("emptyState");
+const toast = document.getElementById("toast");
+
+let activeCategory = "all";
+let toastTimeout;
+
+function renderCategories() {
+  categoryContainer.innerHTML = "";
+
+  categories.forEach(category => {
+    const button = document.createElement("button");
+    button.className = "category-btn";
+    button.textContent = `${category.icon} ${category.name}`;
+    button.classList.toggle("active", category.id === activeCategory);
+    button.setAttribute("aria-pressed", category.id === activeCategory);
+
+    button.addEventListener("click", () => {
+      activeCategory = category.id;
+      renderCategories();
+      renderEmojis();
+    });
+
+    categoryContainer.appendChild(button);
+  });
+}
+
+function renderEmojis() {
+  const query = searchInput.value.trim().toLowerCase();
+
+  const filtered = emojis.filter(([emoji, name, category]) => {
+    const matchesCategory =
+      activeCategory === "all" || category === activeCategory;
+
+    const matchesSearch =
+      emoji.includes(query) || name.toLowerCase().includes(query);
+
+    return matchesCategory && matchesSearch;
+  });
+
+  emojiGrid.innerHTML = "";
+
+  filtered.forEach(([emoji, name]) => {
+    const button = document.createElement("button");
+    button.className = "emoji-btn";
+    button.type = "button";
+    button.title = `${name} — click to copy`;
+    button.setAttribute("aria-label", `Copy ${name} emoji`);
+
+    const symbol = document.createElement("span");
+    symbol.className = "emoji";
+    symbol.textContent = emoji;
+
+    const label = document.createElement("span");
+    label.className = "emoji-name";
+    label.textContent = name;
+
+    button.append(symbol, label);
+    button.addEventListener("click", () => copyEmoji(emoji, name));
+
+    emojiGrid.appendChild(button);
+  });
+
+  const category = categories.find(item => item.id === activeCategory);
+
+  sectionTitle.textContent =
+    activeCategory === "all" ? "All Emojis" : `${category.name} Emojis`;
+
+  countLabel.textContent =
+    `${filtered.length} ${filtered.length === 1 ? "emoji" : "emojis"}`;
+
+  emptyState.style.display = filtered.length ? "none" : "block";
+  emojiGrid.style.display = filtered.length ? "grid" : "none";
+}
+
+async function copyEmoji(emoji, name) {
+  try {
+    await navigator.clipboard.writeText(emoji);
+    showToast(`${emoji} ${name} copied!`);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = emoji;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      const success = document.execCommand("copy");
+      showToast(success ? `${emoji} ${name} copied!` : "Unable to copy. Please try again.");
+    } catch {
+      showToast("Unable to copy. Please try again.");
+    }
+
+    textarea.remove();
+  }
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1800);
+}
+
+searchInput.addEventListener("input", renderEmojis);
+
+renderCategories();
+renderEmojis();
+</script>
+</body>
+</html>
